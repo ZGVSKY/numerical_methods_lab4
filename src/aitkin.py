@@ -13,17 +13,19 @@ from src.common import Z1, EPS
 
 def linear(y_i, x_i, y_j, x_j, z):
     """Лінійний тричлен Ейткіна: P_{i,j}(z) за двома вузлами."""
-    raise NotImplementedError("TODO (Степан)")
+    return (y_i * (x_j - z) - y_j * (x_i - z)) / (x_j - x_i)
 
 
 def quadratic(p01, x0, p12, x1, z):
     """Квадратичний тричлен Ейткіна за двома лінійними тричленами."""
-    raise NotImplementedError("TODO (Степан)")
+    # Зверніть увагу: x1 тут грає роль дальнього вузла, тому ділимо на (x1 - x0)
+    return (p01 * (x1 - z) - p12 * (x0 - z)) / (x1 - x0)
 
 
 def cubic(p012, x0, p123, x1, z):
     """Кубічний тричлен Ейткіна за двома квадратичними тричленами."""
-    raise NotImplementedError("TODO (Степан)")
+    # x1 грає роль дальнього вузла (x3)
+    return (p012 * (x1 - z) - p123 * (x0 - z)) / (x1 - x0)
 
 
 def run(xs=None, ys=None, z=Z1, eps=EPS):
@@ -32,4 +34,34 @@ def run(xs=None, ys=None, z=Z1, eps=EPS):
 
     Повертає словник: {"z": z, "value": наближене значення f(z), "table": ...}.
     """
-    raise NotImplementedError("TODO (Степан): завдання 1")
+    # Завдання 1 вимагає рівно 4 вузли
+    x, y = xs[:4], ys[:4]
+
+    # 1. Лінійні тричлени
+    p01 = linear(y[0], x[0], y[1], x[1], z)
+    p12 = linear(y[1], x[1], y[2], x[2], z)
+    p23 = linear(y[2], x[2], y[3], x[3], z)
+
+    # 2. Квадратичні тричлени
+    p012 = quadratic(p01, x[0], p12, x[2], z)
+    p123 = quadratic(p12, x[1], p23, x[3], z)
+
+    # 3. Кубічний тричлен
+    p0123 = cubic(p012, x[0], p123, x[3], z)
+
+    print("Таблиця 1. Схема Ейткіна")
+    print(
+        f"{'i':<2} | {'x_i':<6} | {'y_i':<7} | {'x_i - z':<8} | {'P_{i,i+1}':<9} | {'P_{...} (j=2)':<13} | {'P_{...} (j=3)':<13}")
+    print("-" * 75)
+    print(f"0  | {x[0]:<6.3f} | {y[0]:<7.3f} | {x[0] - z:<8.3f} | {p01:<9.3f} | {p012:<13.3f} | {p0123:<13.3f}")
+    print(f"1  | {x[1]:<6.3f} | {y[1]:<7.3f} | {x[1] - z:<8.3f} | {p12:<9.3f} | {p123:<13.3f} |")
+    print(f"2  | {x[2]:<6.3f} | {y[2]:<7.3f} | {x[2] - z:<8.3f} | {p23:<9.3f} |               |")
+    print(f"3  | {x[3]:<6.3f} | {y[3]:<7.3f} | {x[3] - z:<8.3f} |           |               |")
+    print("-" * 75)
+    print(f"f({z}) ≈ {p0123:.3f}\n")
+
+    return {
+        "z": z,
+        "value": p0123,
+        "table": [p01, p12, p23, p012, p123, p0123]
+    }
